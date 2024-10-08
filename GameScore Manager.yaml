@@ -1,0 +1,950 @@
+openapi: 3.0.0
+info:
+  title: REST API for Player and Score Management
+  version: 1.0.0
+  description: The Score Management System project is a full-stack web application that allows managing and displaying the scores of players in an online video game. Players will be able to register on the platform, log in, and their scores will be automatically recorded when they play. The highest scores will be displayed on a global ranking. Administrators will be able to manage score content and users from an admin panel.
+  contact:
+    name: Support Group JUS
+    email: urielcasadiego@gmail.com
+  x-contacts:
+    - name: Jeremy
+      email: jeremy9451.lmd@gmail.com
+    - name: Steven Forero Talento
+      email: steven99999@gmail.com
+    - name: Jason Balamba
+      email: jb@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+
+servers:
+  - url: http://localhost:3000/api/v1
+
+paths:
+  # User Routes
+  /auth/register:
+    post:
+      summary: "Register a new player"
+      tags:
+        - user
+      requestBody:
+        description: Create a new player
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: "Player registered successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Player registered successfully"
+                  userId:
+                    type: string
+                    format: uuid
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+        '400':
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Email already registered"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error registering the player"
+
+  /auth/login:
+    post:
+      summary: "Log in and generate JWT token"
+      tags:
+        - user
+      requestBody:
+        required: true
+        description: Login
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                  description: "User's email for login"
+                password:
+                  type: string
+                  format: password
+                  example: "yourPassword123"
+                  description: "User's password for login"
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: "Login successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Login successful"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '401':
+          description: "Invalid credentials"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid credentials"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error logging in"
+
+  /users/profile:
+    get:
+      summary: "Get the profile of the authenticated player"
+      tags:
+        - user
+      responses:
+        '200':
+          description: "Profile retrieved successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+                  name:
+                    type: string
+                    example: "Juan Pérez"
+                  email:
+                    type: string
+                    example: "juan.perez@example.com"
+        '401':
+          description: "Unauthenticated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthenticated"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error retrieving profile"
+
+  /users/profile/{userId}:
+    put:
+      summary: "Modify player data"
+      tags:
+        - user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: "User ID"
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: "Player data modified"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Data updated successfully"
+        '400':
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid data"
+        '404':
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not found"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error modifying player data"
+
+  /users/password/{userId}:
+    put:
+      summary: "Change player's password"
+      tags:
+        - user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: "User ID"
+          schema:
+            type: string
+            format: uuid
+        - name: currentPassword
+          in: query
+          required: true
+          description: "Current password of the user"
+          schema:
+            type: string
+            format: password
+        - name: newPassword
+          in: query
+          required: true
+          description: "New password for the user"
+          schema:
+            type: string
+            format: password
+      responses:
+        '200':
+          description: "Password changed successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password changed successfully"
+        '400':
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Password does not meet requirements"
+        '404':
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not found"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error changing password"
+
+  /users/{userId}/reset-password:
+    put:
+      summary: "Reset a user's password (admin only)"
+      tags:
+        - user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: "User ID"
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: "Password reset successfully"
+        '403':
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+        '404':
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not found"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error resetting password"
+
+  /auth/logout:
+    post:
+      summary: "Log out the user"
+      tags:
+        - user
+      responses:
+        '204':
+          description: "Logged out successfully"
+        '401':
+          description: "Unauthenticated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthenticated"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error logging out"
+
+# Score Routes
+  /scores:
+    post:
+      summary: "Add a new score from the video game"
+      tags:
+        - score
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+               $ref: '#/components/schemas/Score'
+      responses:
+        '201':
+          description: "Score added successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Score added successfully"
+        '400':
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid score data"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error adding score"
+
+  /scores/leaderboard:
+    get:
+      summary: "Retrieve scores for a specific game"
+      tags:
+        - score
+      responses:
+        '200':
+          description: "Scores retrieved successfully"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    playerId:
+                      type: string
+                      format: uuid
+                      example: "550e8400-e29b-41d4-a716-446655440000"
+                      description: "id score"
+                    score:
+                      type: integer
+                      example: 1500
+                      description: "score value"
+                    created_at:
+                      type: string
+                      format: date-time
+                      example: "2023-10-07T12:34:56Z"
+                      description: "Date and time score"
+        '404':
+          description: "Game not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Game not found"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error retrieving scores"
+
+# Admin Routes
+  /users/admin:
+    get:
+      summary: "List and manage players (admin only)"
+      tags:
+        - admin
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: "The page number for pagination"
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          description: "The number of records to return per page"
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: "List of players"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user_id:
+                          type: string
+                          example: "12345"
+                        username:
+                          type: string
+                          example: "player1"
+                        name:
+                          type: string
+                          example: "John Doe"
+                        email:
+                          type: string
+                          example: "johndoe@example.com"
+                        role:
+                          type: string
+                          example: "player"
+                        created_at:
+                          type: string
+                          format: date-time
+                          example: "2024-01-01T00:00:00Z"
+        '401':
+          description: "Unauthorized access"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+        '400':
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid score data"
+        '404':
+          description: "Score not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Score not found"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error updating score"
+
+  /users/admin/{userId}:
+    patch:
+      summary: "Enable or block users (admin only)"
+      tags:
+        - admin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: "ID of the user to enable or block"
+          schema:
+            type: string
+            example: "12345"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [enabled, blocked]
+                  example: "enabled"
+      responses:
+        '200':
+          description: "User status updated successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User status updated"
+        '404':
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not found"
+        '401':
+          description: "Unauthorized access"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+
+    delete:
+      summary: "Delete users (admin only)"
+      tags:
+        - admin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: "ID of the user to delete"
+          schema:
+            type: string
+            example: "12345"
+      responses:
+        '200':
+          description: "User deleted successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User deleted successfully"
+        '404':
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not found"
+        '401':
+          description: "Unauthorized access"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+
+  /users/admin/scores/{userId}:
+    delete:
+      summary: "Delete a specific score (admin only)"
+      tags:
+        - admin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: "ID of the user whose score is to be deleted"
+          schema:
+            type: string
+            example: "12345"
+        - name: scoreId
+          in: query
+          required: true
+          description: "ID of the score to be deleted"
+          schema:
+            type: string
+            example: "67890"
+      responses:
+        '200':
+          description: "Score deleted successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Score deleted successfully"
+        '404':
+          description: "User or score not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User or score not found"
+        '401':
+          description: "Unauthorized access"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+
+# log
+  /log:
+    post:
+      summary: Add log for user deletion or block by admin
+      tags:
+        - Logs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Log'
+      responses:
+        '201':
+          description: Log successfully created
+        '400':
+          description: Invalid data
+        '403':
+          description: Unauthorized (admin only)
+
+  /log/{userId}:
+    get:
+      summary: Get history of a user by admin
+      tags:
+        - Logs
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID of the user to retrieve the history
+          schema:
+            type: string
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: User history successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      description: Action taken
+                    created_at:
+                      type: string
+                      format: date-time
+                      description: Date of the action
+        '404':
+          description: User not found
+        '403':
+          description: Unauthorized (admin only)
+
+  /log/filter/{action}:
+    get:
+      summary: Filter logs by action type (admin only)
+      tags:
+        - Logs
+      parameters:
+        - name: action
+          in: path
+          required: true
+          description: Type of action to filter (block, delete, etc.)
+          schema:
+            type: string
+            example: "block"
+      responses:
+        '200':
+          description: Logs successfully filtered
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    userId:
+                      type: string
+                      description: ID of the affected user
+                    action:
+                      type: string
+                      description: Type of action
+                    created_at:
+                      type: string
+                      format: date-time
+                      description: Date of the action
+        '404':
+          description: No logs found for the given filter
+        '403':
+          description: Unauthorized (admin only)
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: "Unique identifier for the user"
+        username:
+          type: string
+          example: "juanperez"
+          description: "Username of the user"
+        name:
+          type: string
+          example: "Juan Pérez"
+          description: "Full name of the user"
+        email:
+          type: string
+          example: "juan.perez@example.com"
+          description: "Email address of the user"
+        password:
+          type: string
+          format: password
+          example: "encryptedpassword"
+          description: "User's password for login"
+        role:
+          type: string
+          enum:
+            - Player
+            - Admin
+          example: "player"
+          description: "Role of the user, either 'Player' or 'Admin'"
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-10-07T12:34:56Z"
+          description: "Date and time when the user was created"
+      xml:
+        name: user
+    Score:
+      type: object
+      properties:
+        score_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174001"
+          description: "Unique identifier for the score"
+        user_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: "The ID of the user associated with this score"
+        game:
+          type: string
+          example: "Space Invaders"
+          description: "Name or identification of the game"
+        score:
+          type: integer
+          example: 1500
+          description: "The score obtained in the game"
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-10-07T12:34:56Z"
+          description: "Date and time when the score was created"
+      xml:
+        name: score
+    Log:
+      type: object
+      properties:
+        log_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174001"
+          description: "Unique identifier for each log entry"
+        user_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: "ID of the user who performed the action (FK referencing users.user_id)"
+        action:
+          type: string
+          example: "login"
+          description: "Description of the action performed (e.g., 'login', 'update_score', 'delete_user', etc.)"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-10-07T12:34:56Z"
+          description: "Date and time when the action was logged"
+        details:
+          type: string
+          example: "User updated their score to 1500."
+          description: "Additional details about the action, such as changes made or relevant messages (optional)"
+      xml:
+        name: log
+
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+      xml:
+        name: '##default'
+  requestBodies:
+    Pet:
+      description: User object that needs to be Register
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/User'
+    UserArray:
+      description: List of user object
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/User'
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://gameScore.swagger.io/oauth/authorize
+          scopes:
+            write:pets: modify user in your account
+            read:pets: read your user
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
